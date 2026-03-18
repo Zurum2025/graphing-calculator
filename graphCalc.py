@@ -62,30 +62,61 @@ def calculate_axis_limits(data):
 
 st.title("Scientific Graphing Calculator")
 
+input_mode = st.radio(
+    "Select Input Method",
+    ["Manual Input", "Upload CSV"]
+)
+
 st.write("Enter your experimental data")
 
-# Data input
-x_values = st.text_input("Enter X values (comma separated)", "1,2,3,4,5")
-y_values = st.text_input("Enter Y values (comma separated)", "2,4,5,4,5")
 
-# Parse input safely
-try:
-    x = np.array([float(i.strip()) for i in x_values.split(",")])
-    y = np.array([float(i.strip()) for i in y_values.split(",")])
-except:
-    st.error("Invalid input. Please enter numeric values separated by commas.")
+if input_mode == "Upload CSV":
+    uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+
+    if uploaded_file is not None:
+        import pandas as pd
+
+        df = pd.read_csv(uploaded_file)
+
+        st.write("Preview of data:")
+        st.dataframe(df)
+
+        columns = df.columns.tolist()
+
+        x_column = st.selectbox("Select X variable", columns)
+        y_column = st.selectbox("Select Y variable", columns)
+
+        x = df[x_column].values
+        y = df[y_column].values
+
+        x_label = x_column
+        y_label = y_column
+elif input_mode == "Manual Input":
+    x_values = st.text_input("Enter X values (comma-separated)", "1, 2, 3, 4, 5")
+    y_values = st.text_input("Enter Y values (comma-separated)", "2, 3, 5, 7, 11")
+
+    
+    # Parse input safely
+    try:
+        x = np.array([float(i.strip()) for i in x_values.split(",")])
+        y = np.array([float(i.strip()) for i in y_values.split(",")])
+    except:
+        st.error("Invalid input. Please enter numeric values separated by commas.")
+        st.stop()
+
+    # Validate length
+    if len(x) != len(y):
+        st.error("X and Y must have the same number of values.")
+        st.stop()
+
+    # Axis labels
+    x_label = st.text_input("X axis variable", "X")
+    y_label = st.text_input("Y axis variable", "Y")
+
+if 'x' not in locals() or 'y' not in locals():
+    st.warning("Please provide valid input data.")
     st.stop()
-
-# Validate length
-if len(x) != len(y):
-    st.error("X and Y must have the same number of values.")
-    st.stop()
-
-# Axis labels
-x_label = st.text_input("X axis variable", "X")
-y_label = st.text_input("Y axis variable", "Y")
-
-
+    
 # ==============================
 # Main Logic
 # ==============================
